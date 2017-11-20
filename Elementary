@@ -1,0 +1,210 @@
+/*
+ * fixed_point_elementary.h
+ *
+ *  Created on: Nov 28, 2016
+ *      Author: martin
+ */
+
+#ifndef FIXED_POINT_ELEMENTARY_H_
+#define FIXED_POINT_ELEMENTARY_H_
+
+
+namespace fixedpoint
+{
+//
+// Elementary Functions
+//
+
+//	Absolute Value
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPoint<_storage_type, _frac_bits, _calc_type> abs( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+    if(_val.storage() < 0) return value_t::Storage(static_cast<_storage_type>(-1) * _val.storage());
+    return _val;
+}
+
+//	Square Root Function using the Babylonian Method
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPoint<_storage_type, _frac_bits, _calc_type> sqrt( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val, const uint8_t _N_limit = 10 ) {
+	typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+    static const value_t half(0.5);
+	value_t Xn = _val;
+    value_t Xn_last(Xn);
+
+
+    for(uint8_t iter = 0; iter < _N_limit; ++iter ) {
+		Xn = half * (Xn + (_val / Xn));
+        if(Xn.storage() == Xn_last.storage()) break;
+        Xn_last = Xn;
+	}
+
+	return Xn;
+}
+
+//	Inverse Square-Root Function
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPoint<_storage_type, _frac_bits, _calc_type> invSqrt( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val ) {
+	typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+	value_t Xn = _val;
+
+	// TODO: Implement inverse square root
+	return Xn;
+}
+
+//	Log base 2
+//      Note: This function is based upon code on github by dmoulding at https://github.com/dmoulding/log2fix
+//          the code is, in turn, based upon the algorithm for a binary log2 found in "A fast binary logarithm algorithm" by Clay S. Turner
+//
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > log2( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+    typedef typename value_t::storage_t storage_t;
+    typedef typename value_t::calc_t calc_t;
+    typedef FixedPointReturn<value_t> return_t;
+    FixedPointErrors err;
+
+    storage_t b = 1UL << (value_t::FRAC_BITS-1UL);
+    storage_t y = 0;
+    storage_t x = _val.storage(); // This is a hack... it would be better to make these friend functions....
+
+    if(x == 0) { // Return -inf for an argument of zero
+        err.invalidArgument = true;
+        err.code = NumCode::NegativeInfinity;
+        y = 0;
+    } else if(x < 0){ // Return NaN for
+        err.invalidArgument = true;
+        err.code = NumCode::NaN;
+        y = 0;
+    } else {
+        //
+        // Do range reduction to [1.0, 2.0]
+        //
+        static const storage_t upper = 2<<value_t::FRAC_BITS;
+        static const storage_t lower = 1<<value_t::FRAC_BITS;
+
+        while(x < lower) {
+            x <<= 1;
+            y -= lower;
+        }
+
+        while(x >= upper) {
+            x >>= 1;
+            y += lower;
+        }
+
+        //
+        // Calculate the final reduced range log2
+        //
+        calc_t z = x;
+
+        for (uint8_t i = 0; i < value_t::FRAC_BITS; ++i) {
+            z = (z * z) >> value_t::FRAC_BITS;
+            if(z == 0) {
+                break;
+            } else if (z >= upper) {
+                z >>= 1;
+                y += b;
+            }
+
+            b >>= 1;
+        }
+    }
+
+    return return_t(value_t::Storage(y), err);
+}
+
+//	Log base e
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > ln( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+    typedef FixedPointReturn<value_t> return_t;
+
+    static const value_t scale(0.69314718056); // ln(2)
+    const return_t result = log2(_val);
+    if(!result.err.ok()) return result;
+    return return_t(scale*result.val, result.err);
+}
+
+//  Log base 10
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > log10( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+    typedef FixedPointReturn<value_t> return_t;
+
+    static const value_t scale(.301029995664); // log10(2)
+    const return_t result = log2(_val);
+    if(!result.err.ok()) return result;
+    return return_t(scale*result.val, result.err);
+}
+
+//	2^x
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp2( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _x) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+    typedef typename value_t::storage_t storage_t;
+    typedef FixedPointReturn<value_t> return_t;
+    FixedPointErrors err;
+
+    const bool negative_exp = _x.isNegative();
+    const value_t exp = abs(_x);
+    const storage_t i = exp.integer().storage() >> value_t::FRAC_BITS;
+
+    // Calculate the integer power portion of the exponent
+    const value_t i_part(1<<i);
+
+
+    // Calculate the fractional power portion of the exponent
+    //  This is using a standard taylor series expansion... this can likely be optimized
+    static const value_t ln2(0.69314718056); // ln(2)
+    value_t x(ln2*exp.fractional());
+    value_t z(x);
+    value_t f_part = 1 + z;
+    storage_t div = 1;
+
+    uint8_t term = 2;
+    while(true) {
+        div *= term;
+        z *= x;
+        const value_t inc = value_t::IntDiv(z,div);
+        if(inc.isZero()) break;
+        f_part += inc;
+        ++term;
+    }
+
+    // Multiply integer and fractional parts, and return
+    const value_t y(i_part*f_part);
+    return return_t(negative_exp ? reciprocal(y) : y, err);
+}
+
+//	e^x
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+
+    static const value_t scale(1.44269504089); // log2(e)
+    return log2(scale*_val);
+}
+
+//  10^x
+template<class _storage_type, uint8_t _frac_bits, class _calc_type>
+FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp10( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+
+    static const value_t scale(3.32192809489); // log2(10)
+    return log2(scale*_val);
+}
+
+//	x^y
+template<class _storage_type, uint8_t _frac_bits, class _calc_type, class S, uint8_t F, class C>
+FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > pow( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _x, const FixedPoint<S, F, C>& _y) {
+    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+    typedef FixedPointReturn<value_t> return_t;
+
+    const return_t result = log2(_x);
+    if(!result.err.ok()) return result;
+    return exp2(_y * result.val);
+}
+
+}
+
+#endif /* FIXED_POINT_ELEMENTARY_H_ */
