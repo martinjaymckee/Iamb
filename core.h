@@ -1,14 +1,38 @@
-/*
- * fixed_point.h
- *
- *  Created on: Apr 28, 2016
- *      Author: martin
- */
+//
+//
+// File - Iamb/Core:
+//
+//      Implementation of the Fixedpoint class and related support types.
+//
+//
+// MIT License
+//
+// Copyright (c) 2017 Martin Jay McKee
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+//
 
-#ifndef FIXED_POINT_H_
-#define FIXED_POINT_H_
+#ifndef IAMB_CORE_H
+#define IAMB_CORE_H
 
-#include <math.h>
+#include <cmath>
 #include <stdint.h>
 
 #include "meta.h"
@@ -16,7 +40,7 @@
 //#include <iostream>
 //using namespace std;
 
-namespace fixedpoint
+namespace iamb
 {
 
 namespace NumCode {
@@ -77,7 +101,6 @@ struct FixedPointReturn
 };
 
 // TODO: WHEN ERROR HANDLING IS ADDED TO THIS CLASS, THE ACTUAL ERROR HANDLING SHOULD BE CONTROLLED BY A TEMPLATE PARAMETER.
-// TODO: IT'S FAIRLY HORRIBLE, BUT I NEED TO ADD ALL THE EXTERNAL FUNCTIONS AS FRIEND FUNCTIONS....
 template<class _storage_type = int32_t, uint8_t _frac_bits = 16, class _calc_type = int64_t>
 class FixedPoint
 {
@@ -248,12 +271,6 @@ class FixedPoint
     private:
         storage_t storage_;
 };
-} /* namespace fixedpoint */
+} /* namespace iamb */
 
-//
-// Additional Fixedpoint
-//
-#include "fixed_point_arithmetic.h"
-#include "fixed_point_elementary.h"
-
-#endif /* FIXED_POINT_H_ */
+#endif /* IAMB_CORE_H */
