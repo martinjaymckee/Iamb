@@ -1,6 +1,6 @@
 //
 //
-// File - Iamb/Elementary:
+// File - Iamb/elementary.h:
 //
 //      Implementation of the elementary functions applied to Fixedpoint values.
 //
@@ -32,31 +32,39 @@
 #ifndef IAMB_ELEMENTARY_H
 #define IAMB_ELEMENTARY_H
 
+#include "core.h"
+#include "arithmetic.h"
 
+//
+// NOTE: GOOD REFERENCES FOR SIN/COS, ATAN2, ASIN/ACOS INCLUDE:
+// http://www.olliw.eu/2014/fast-functions/
+//
+//
 namespace iamb
 {
+
 //
 // Elementary Functions
 //
 
 //	Absolute Value
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPoint<_storage_type, _frac_bits, _calc_type> abs( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
-    if(_val.storage() < 0) return value_t::Storage(static_cast<_storage_type>(-1) * _val.storage());
+template<class S, size_t F, class C>
+FixedPoint<S, F, C> abs( const FixedPoint<S, F, C>& _val) {
+    typedef FixedPoint<S, F, C> value_t;
+    if(_val.storage() < 0) return value_t::Storage(static_cast<S>(-1) * _val.storage());
     return _val;
 }
 
+template<typename T> struct TD;
 //	Square Root Function using the Babylonian Method
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPoint<_storage_type, _frac_bits, _calc_type> sqrt( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val, const uint8_t _N_limit = 10 ) {
-	typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C, size_t Nlimit=10>
+FixedPoint<S, F, C> sqrt(const FixedPoint<S, F, C>& _val) {
+    typedef FixedPoint<S, F, C> value_t;
     static const value_t half(0.5);
 	value_t Xn = _val;
     value_t Xn_last(Xn);
 
-
-    for(uint8_t iter = 0; iter < _N_limit; ++iter ) {
+    for(size_t iter = 0; iter < Nlimit; ++iter ) {
 		Xn = half * (Xn + (_val / Xn));
         if(Xn.storage() == Xn_last.storage()) break;
         Xn_last = Xn;
@@ -66,9 +74,9 @@ FixedPoint<_storage_type, _frac_bits, _calc_type> sqrt( const FixedPoint<_storag
 }
 
 //	Inverse Square-Root Function
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPoint<_storage_type, _frac_bits, _calc_type> invSqrt( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val ) {
-	typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C>
+FixedPoint<S, F, C> invSqrt( const FixedPoint<S, F, C>& _val ) {
+    typedef FixedPoint<S, F, C> value_t;
 	value_t Xn = _val;
 
 	// TODO: Implement inverse square root
@@ -79,9 +87,9 @@ FixedPoint<_storage_type, _frac_bits, _calc_type> invSqrt( const FixedPoint<_sto
 //      Note: This function is based upon code on github by dmoulding at https://github.com/dmoulding/log2fix
 //          the code is, in turn, based upon the algorithm for a binary log2 found in "A fast binary logarithm algorithm" by Clay S. Turner
 //
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > log2( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C>
+FixedPointReturn<FixedPoint<S, F, C> > log2( const FixedPoint<S, F, C>& _val) {
+    typedef FixedPoint<S, F, C> value_t;
     typedef typename value_t::storage_t storage_t;
     typedef typename value_t::calc_t calc_t;
     typedef FixedPointReturn<value_t> return_t;
@@ -121,7 +129,7 @@ FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > log2( const
         //
         calc_t z = x;
 
-        for (uint8_t i = 0; i < value_t::FRAC_BITS; ++i) {
+        for (size_t i = 0; i < value_t::FRAC_BITS; ++i) {
             z = (z * z) >> value_t::FRAC_BITS;
             if(z == 0) {
                 break;
@@ -138,9 +146,9 @@ FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > log2( const
 }
 
 //	Log base e
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > ln( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C>
+FixedPointReturn<FixedPoint<S, F, C> > ln( const FixedPoint<S, F, C>& _val) {
+    typedef FixedPoint<S, F, C> value_t;
     typedef FixedPointReturn<value_t> return_t;
 
     static const value_t scale(0.69314718056); // ln(2)
@@ -150,9 +158,9 @@ FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > ln( const F
 }
 
 //  Log base 10
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > log10( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C>
+FixedPointReturn<FixedPoint<S, F, C> > log10( const FixedPoint<S, F, C>& _val) {
+    typedef FixedPoint<S, F, C> value_t;
     typedef FixedPointReturn<value_t> return_t;
 
     static const value_t scale(.301029995664); // log10(2)
@@ -162,9 +170,9 @@ FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > log10( cons
 }
 
 //	2^x
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp2( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _x) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C>
+FixedPointReturn<FixedPoint<S, F, C> > exp2( const FixedPoint<S, F, C>& _x) {
+    typedef FixedPoint<S, F, C> value_t;
     typedef typename value_t::storage_t storage_t;
     typedef FixedPointReturn<value_t> return_t;
     FixedPointErrors err;
@@ -185,7 +193,7 @@ FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp2( const
     value_t f_part = 1 + z;
     storage_t div = 1;
 
-    uint8_t term = 2;
+    size_t term = 2;
     while(true) {
         div *= term;
         z *= x;
@@ -201,34 +209,57 @@ FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp2( const
 }
 
 //	e^x
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C>
+FixedPointReturn<FixedPoint<S, F, C> > exp( const FixedPoint<S, F, C>& _val) {
+    typedef FixedPoint<S, F, C> value_t;
 
     static const value_t scale(1.44269504089); // log2(e)
     return log2(scale*_val);
 }
 
 //  10^x
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > exp10( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _val) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
+template<class S, size_t F, class C>
+FixedPointReturn<FixedPoint<S, F, C> > exp10( const FixedPoint<S, F, C>& _val) {
+    typedef FixedPoint<S, F, C> value_t;
 
     static const value_t scale(3.32192809489); // log2(10)
     return log2(scale*_val);
 }
 
 //	x^y
-template<class _storage_type, uint8_t _frac_bits, class _calc_type, class S, uint8_t F, class C>
-FixedPointReturn<FixedPoint<_storage_type, _frac_bits, _calc_type> > pow( const FixedPoint<_storage_type, _frac_bits, _calc_type>& _x, const FixedPoint<S, F, C>& _y) {
-    typedef FixedPoint<_storage_type, _frac_bits, _calc_type> value_t;
-    typedef FixedPointReturn<value_t> return_t;
+template<class S1, size_t F1, class C1, class S2, size_t F2, class C2>
+FixedPointReturn<FixedPoint<S1, F1, C1> > pow( const FixedPoint<S1, F1, C1>& _x, const FixedPoint<S2, F2, C2>& _y) {
+    using value_t = FixedPoint<S1, F1, C1>;
+    using return_t = FixedPointReturn<value_t>;
 
     const return_t result = log2(_x);
     if(!result.err.ok()) return result;
     return exp2(_y * result.val);
 }
 
+//
+// Trigonometric Functions
+//
+//  acos
+template<class S, size_t F, class C>
+FixedPointReturn<FixedPoint<S, F, C> > acos( const FixedPoint<S, F, C>& _val) {
+    using value_t = FixedPoint<S, F, C>;
+    static constexpr value_t one(1);
+    static constexpr value_t two(2);
+    static constexpr value_t pi(3.14159265358979);
+    static constexpr value_t a(-0.0187293);
+    static constexpr value_t b(0.0742610);
+    static constexpr value_t c(-0.2121144);
+    static constexpr value_t d(pi/2); // 1.5707288
+    const value_t negate((_val.isNegative() ? 1 : 0));
+    value_t v(a*_val);
+    v += b;
+    v *= _val;
+    v += c;
+    v *= sqrt(one-_val);
+    v -= two * negate * v;
+    return (negate * pi) + v;
+}
 } /*namespace iamb*/
 
 #endif /*IAMB_ELEMENTARY_H*/

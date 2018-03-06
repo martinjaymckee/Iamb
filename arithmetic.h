@@ -1,8 +1,8 @@
 //
 //
-// File - Iamb/Arithmetic:
+// File - Iamb/arithmetic.h:
 //
-//      Implementation of the Fixedpoint arithmetic functions.
+//      Implementation of the FixedPoint arithmetic functions.
 //
 //
 // MIT License
@@ -32,71 +32,171 @@
 #ifndef IAMB_ARITHMETIC_H
 #define IAMB_ARITHMETIC_H
 
-#include "Core"
+#include "core.h"
 
 namespace iamb
 {
 
 //
-// Basic Arithmetical Operations
+// Basic Arithmetic Operations
 //
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPoint<_storage_type, _frac_bits, _calc_type> operator - (const FixedPoint<_storage_type, _frac_bits, _calc_type>& _a) {
-    static const FixedPoint<_storage_type, _frac_bits, _calc_type> neg_one(-1);
+//  Negation
+template<typename S, size_t F, typename C>
+constexpr FixedPoint<S, F, C> operator - (const FixedPoint<S, F, C>& _a) {
+    constexpr FixedPoint<S, F, C> neg_one(-1);
     return neg_one * _a;
 }
 
-template<class _storage_type, uint8_t _frac_bits, class _calc_type, class S, uint8_t F, class C>
-FixedPoint<_storage_type, _frac_bits, _calc_type> operator + (const FixedPoint<_storage_type, _frac_bits, _calc_type>& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<_storage_type> temp = _a;
+//  Addition
+//      --> Symmetric
+template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+constexpr FixedPoint<S1, F1, C1> operator + (
+        const FixedPoint<S1, F1, C1>& _a,
+        const FixedPoint<S2, F2, C2>& _b)
+{
+    FixedPoint<S1, F1, C1> temp(_a);
     temp += _b;
     return temp;
 }
 
-template<class _storage_type, uint8_t _frac_bits, class _calc_type, class S, uint8_t F, class C>
-FixedPoint<_storage_type, _frac_bits, _calc_type> operator - (const FixedPoint<_storage_type, _frac_bits, _calc_type>& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<_storage_type, _frac_bits, _calc_type> temp = _a;
+//      --> With Conversion
+template<typename S, size_t F, typename C, typename V,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator + (const FixedPoint<S, F, C>& _a, const V& _b) {
+    const FixedPoint<S, F, C> b(_b);
+    FixedPoint<S> temp(_a);
+    temp += b;
+    return temp;
+}
+template<typename V, typename S, size_t F, typename C,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator + (const V& _a, const FixedPoint<S, F, C>& _b) {
+    FixedPoint<S, F, C> temp(_a);
+    temp += _b;
+    return temp;
+}
+
+
+//  Subtraction
+//      --> Symmetric
+template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+constexpr FixedPoint<S1, F1, C1> operator - (
+        const FixedPoint<S1, F1, C1>& _a,
+        const FixedPoint<S2, F2, C2>& _b)
+{
+    FixedPoint<S1, F1, C1> temp(_a);
     temp -= _b;
     return temp;
 }
 
-template<class _storage_type, uint8_t _frac_bits, class _calc_type, class S, uint8_t F, class C>
-FixedPoint<_storage_type, _frac_bits, _calc_type> operator * (const FixedPoint<_storage_type, _frac_bits, _calc_type>& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<_storage_type, _frac_bits, _calc_type> temp = _a;
+//      --> With Conversion
+template<typename S, size_t F, typename C, typename V,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator - (const FixedPoint<S, F, C>& _a, const V& _b) {
+    const FixedPoint<S, F, C> b(_b);
+    FixedPoint<S> temp(_a);
+    temp -= b;
+    return temp;
+}
+template<typename V, typename S, size_t F, typename C,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator - (const V& _a, const FixedPoint<S, F, C>& _b) {
+    FixedPoint<S, F, C> temp(_a);
+    temp -= _b;
+    return temp;
+}
+
+//  Multiplication
+//      --> Symmetric
+template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+constexpr FixedPoint<S1, F1, C1> operator * (
+        const FixedPoint<S1, F1, C1>& _a,
+        const FixedPoint<S2, F2, C2>& _b)
+{
+    FixedPoint<S1, F1, C1> temp(_a);
     temp *= _b;
     return temp;
 }
 
-template<class _storage_type, uint8_t _frac_bits, class _calc_type, class S, uint8_t F, class C>
-FixedPoint<_storage_type, _frac_bits, _calc_type> operator / (const FixedPoint<_storage_type, _frac_bits, _calc_type>& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<_storage_type, _frac_bits, _calc_type> temp = _a;
+//      --> With Conversion
+template<typename S, size_t F, typename C, typename V,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator * (const FixedPoint<S, F, C>& _a, const V& _b) {
+    const FixedPoint<S, F, C> b(_b);
+    FixedPoint<S> temp(_a);
+    temp *= b;
+    return temp;
+}
+template<typename V, typename S, size_t F, typename C,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator * (const V& _a, const FixedPoint<S, F, C>& _b) {
+    FixedPoint<S, F, C> temp(_a);
+    temp *= _b;
+    return temp;
+}
+
+//  Division
+//      --> Symmetric
+template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+constexpr FixedPoint<S1, F1, C1> operator / (
+        const FixedPoint<S1, F1, C1>& _a,
+        const FixedPoint<S2, F2, C2>& _b)
+{
+    FixedPoint<S1, F1, C1> temp(_a);
     temp /= _b;
     return temp;
 }
 
+//      --> With Conversion
+template<typename S, size_t F, typename C, typename V,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator / (const FixedPoint<S, F, C>& _a, const V& _b) {
+    const FixedPoint<S, F, C> b(_b);
+    FixedPoint<S> temp(_a);
+    temp /= b;
+    return temp;
+}
+template<typename V, typename S, size_t F, typename C,
+         typename = decltype(static_cast<C>(std::declval<V>()))>
+constexpr FixedPoint<S, F, C> operator / (const V& _a, const FixedPoint<S, F, C>& _b) {
+    FixedPoint<S, F, C> temp(_a);
+    temp /= _b;
+    return temp;
+}
 
-template<uint8_t N>
+//
+// Stream Output
+//
+template<typename Stream, typename S, size_t F, typename C>
+constexpr Stream& operator << (Stream& _stream, const iamb::FixedPoint<S, F, C>& _v) {
+    _stream << static_cast<double>(_v);
+    return _stream;
+
+}
+
+//
+// Safe Value Comparisons
+//
+template<size_t N> // TODO: FIGURE OUT WHAT THE HECK THIS IS DOING!
 struct Compare
 {
-    template<class S, uint8_t F, class C>
+    template<typename S, size_t F, typename C>
     static bool equalTo(const FixedPoint<S, F, C>& _a, const FixedPoint<S, F, C>& _b) {
-        typedef FixedPoint<S, F, C> value_t;
-        typedef typename value_t::storage_t storage_t;
-        typedef typename value_t::calc_t calc_t;
+        using value_t = FixedPoint<S, F, C>;
+        using storage_t = typename value_t::storage_t;
+        using calc_t = typename value_t::calc_t;
 
-        static const storage_t mask = ((calc_t(1UL)<<N)-1UL)<<(value_t::TOTAL_BITS-N);
+        static constexpr storage_t mask = ((calc_t(1UL)<<N)-1UL)<<(value_t::totalBits-N);
         return (_a.storage() & mask) == (_b.storage() & mask);
     }
-
 };
 
 //  Reciprocal
-template<class _storage_type, uint8_t _frac_bits, class _calc_type>
-FixedPoint<_storage_type, _frac_bits, _calc_type> reciprocal(const FixedPoint<_storage_type, _frac_bits, _calc_type>& _a) {
-    static const FixedPoint<_storage_type, _frac_bits, _calc_type> one(1);
+template<typename S, size_t F, typename C>
+constexpr FixedPoint<S, F, C> reciprocal(const FixedPoint<S, F, C>& _a) {
+    constexpr FixedPoint<S, F, C> one(1);
     return one/_a;
 }
-
 } /*namespace iamb*/
 
 #endif /*IAMB_ARITHMETIC_H*/
