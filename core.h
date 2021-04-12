@@ -88,10 +88,18 @@ struct NumCode {
 struct Flags
 {
 	enum flags_t {
-		NONE,
-		NO_UNDERFLOW,
-		NO_OVERFLOW
+		None,
+		NoUnderflow,
+		NoOverflow
 	};
+};
+
+struct OverflowHandling
+{
+  enum overflow_t {
+    Wrapping,
+    Saturating
+  };
 };
 
 // TODO: THIS SHOULD BE OPTIMIZED AND THE API FINALIZED BEFORE IT IS PUSHED THROUGH THE BULK OF THE CODE
@@ -160,7 +168,7 @@ class FixedPoint
 
         //	Value Constructor
         template<typename Value, typename = decltype(static_cast<calc_t>(std::declval<Value>()))>
-        constexpr FixedPoint( const Value& _value, const Flags::flags_t& _flags = Flags::NONE)
+        constexpr FixedPoint( const Value& _value, const Flags::flags_t& _flags = Flags::None)
             : storage_(
                   processFlags(
                       static_cast<storage_t>(_value*meta::raise_to_nth<fractionalBits, calc_t>(2)),
@@ -190,7 +198,7 @@ class FixedPoint
         constexpr FixedPoint(const FixedPointReturn<FixedPoint<S, F, C>>& _ret) : FixedPoint(_ret.val) {}
 
         //	Integer Scaled Static Factory
-        static constexpr ref_t IntDiv(const storage_t& _value, const storage_t& _div, const Flags::flags_t& _flags = Flags::NONE) {
+        static constexpr ref_t IntDiv(const storage_t& _value, const storage_t& _div, const Flags::flags_t& _flags = Flags::None) {
         	ref_t value;
 
         	// Calculate the whole number bits
@@ -205,7 +213,7 @@ class FixedPoint
         }
 
         //	Integer Divison Static Factory
-        static constexpr ref_t IntDiv(const ref_t& _value, const storage_t& _div, const Flags::flags_t& _flags = Flags::NONE) {
+        static constexpr ref_t IntDiv(const ref_t& _value, const storage_t& _div, const Flags::flags_t& _flags = Flags::None) {
             ref_t value;
             const storage_t data = static_cast<storage_t>(static_cast<calc_t>(_value.storage_) / static_cast<calc_t>(_div));
             value.storage_ = processFlags(data, _value.isNegative(), _flags);

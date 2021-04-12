@@ -166,6 +166,7 @@ constexpr FixedPoint<S, F, C> operator / (const V& _a, const FixedPoint<S, F, C>
 
 //
 // Stream Output
+//  -- Note: At the moment this is just formatting through the built-in double type
 //
 template<typename Stream, typename S, size_t F, typename C>
 constexpr Stream& operator << (Stream& _stream, const iamb::FixedPoint<S, F, C>& _v) {
