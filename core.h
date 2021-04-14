@@ -144,6 +144,18 @@ struct FixedPointReturn
 namespace internal
 {
 
+template<class Storage, Storage ValueMask, bool doMask>
+struct MaskStorage
+{
+  static constexpr Storage exec(const Storage& _val) { return _val; }
+};
+
+template<class Storage, Storage ValueMask>
+struct MaskStorage<Storage, ValueMask, true>
+{
+  static constexpr Storage exec(const Storage& _val) { return ValueMask & _val; }
+};
+
 } /*namespace internal*/
 
 // TODO: WHEN ERROR HANDLING IS ADDED TO THIS CLASS, THE ACTUAL ERROR HANDLING SHOULD BE CONTROLLED BY A TEMPLATE PARAMETER.
@@ -187,7 +199,13 @@ class FixedPoint
         constexpr FixedPoint( const Value& _value, const Flags::flags_t& _flags = Flags::None)
             : storage_(
                   processFlags(
-                      valueMask & static_cast<storage_t>(_value*meta::raise_to_nth<fractionalBits, calc_t>(2)),
+                      internal::MaskStorage<
+                        storage_t,
+                        valueMask,
+                        (storageBits>totalBits)
+                      >::exec(
+                        static_cast<storage_t>(_value*meta::raise_to_nth<fractionalBits, calc_t>(2))
+                      ),
                       _value < 0,
                       _flags
                   )
@@ -203,7 +221,13 @@ class FixedPoint
             const bool invert = ( _other.storage_ < 0 );
     		    storage_t value = invert?(neg_one*static_cast<storage_t>(_other.storage_)):static_cast<storage_t>(_other.storage_);
             value = internal::shift<(static_cast<int16_t>(F) - static_cast<int16_t>(fractionalBits))>(value);
-        		storage_ = invert ? (neg_one*value) : value;
+        		storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              static_cast<storage_t>(invert ? (neg_one*value) : value)
+            );
         	}
         }
 
@@ -216,13 +240,19 @@ class FixedPoint
         	ref_t value;
 
         	// Calculate the whole number bits
-            storage_t data = (_value / _div) << fractionalBits;
+          storage_t data = (_value / _div) << fractionalBits;
 
         	// Calculate the fractional number bits
-            constexpr storage_t frac_max = static_cast<storage_t>(1)<<fractionalBits;
+          constexpr storage_t frac_max = static_cast<storage_t>(1)<<fractionalBits;
         	data |= static_cast<calc_t>((frac_max * static_cast<calc_t>(_value%_div)) / _div);
 
-        	value.storage_ = processFlags(data, _value < 0, _flags);
+        	value.storage_ = internal::MaskStorage<
+            storage_t,
+            valueMask,
+            (storageBits>totalBits)
+          >::exec(
+            processFlags(data, _value < 0, _flags)
+          );
         	return value;
         }
 
@@ -230,14 +260,26 @@ class FixedPoint
         static constexpr ref_t IntDiv(const ref_t& _value, const storage_t& _div, const Flags::flags_t& _flags = Flags::None) {
             ref_t value;
             const storage_t data = static_cast<storage_t>(static_cast<calc_t>(_value.storage_) / static_cast<calc_t>(_div));
-            value.storage_ = processFlags(data, _value.isNegative(), _flags);
+            value.storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              processFlags(data, _value.isNegative(), _flags)
+            );
             return value;
         }
 
         //	Direct Storage Set Static Factory
-        static constexpr ref_t Storage(const storage_t& _value) {
+        static constexpr ref_t Storage(storage_t _value) {
             ref_t value;
-            value.storage_ = _value;
+            value.storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              _value
+            );
             return value;
         }
 

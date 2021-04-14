@@ -29,6 +29,8 @@ TEST_CASE( "Fixed-point numbers of default type are constructed", "[fixedpoint]"
 		REQUIRE(b == 0.5);
 		const value_t c = value_t::Storage(0xFFFF0000);
 		REQUIRE(c == -1);
+		const value_t d = value_t::Storage(0xFFFF8000);
+		REQUIRE(d == -0.5);
 	}
 
 	SECTION("Default Construction") {
@@ -43,6 +45,8 @@ TEST_CASE( "Fixed-point numbers of default type are constructed", "[fixedpoint]"
 		REQUIRE(b == 0.5);
 		const value_t c{float(-1.0)};
 		REQUIRE(c == -1);
+		const value_t d{float(-0.5)};
+		REQUIRE(d == -0.5);
 	};
 
 	SECTION("Construction from Double") {
@@ -52,6 +56,8 @@ TEST_CASE( "Fixed-point numbers of default type are constructed", "[fixedpoint]"
 		REQUIRE(b == 0.5);
 		const value_t c{double(-1.0)};
 		REQUIRE(c == -1);
+		const value_t d{float(-0.5)};
+		REQUIRE(d == -0.5);
 	};
 
 	SECTION("Construction from Int") {
@@ -66,6 +72,8 @@ TEST_CASE( "Fixed-point numbers of default type are constructed", "[fixedpoint]"
 		REQUIRE(a == 4.5);
 		const value_t b = value_t::IntDiv(1, 2);
 		REQUIRE(b == 0.5);
+		const value_t c = value_t::IntDiv(3, -6);
+		REQUIRE(c == -0.5);
 	};
 };
 
@@ -78,8 +86,9 @@ TEST_CASE("Fixed-point numbers with s2.2 format are constructed", "[fixedpoint]"
 		const value_t b = value_t::Storage(1 << 1);
 		REQUIRE(b == 0.5);
 		const value_t c = value_t::Storage(0b00001100);
-//		WARN("The storage value for -1 is 0b" << std::bitset<8>(c.storage()));
 		REQUIRE(c == -1);
+		const value_t d = value_t::Storage(0b00001110);
+		REQUIRE(d == -0.5);
 	}
 
 	SECTION("Default Construction") {
@@ -94,6 +103,8 @@ TEST_CASE("Fixed-point numbers with s2.2 format are constructed", "[fixedpoint]"
 		REQUIRE(b == 0.5);
 		const value_t c{ float(-1.0) };
 		REQUIRE(c == -1);
+		const value_t d{ float(-0.5) };
+		REQUIRE(d == -0.5);
 	};
 
 	SECTION("Construction from Double") {
@@ -103,6 +114,8 @@ TEST_CASE("Fixed-point numbers with s2.2 format are constructed", "[fixedpoint]"
 		REQUIRE(b == 0.5);
 		const value_t c{ double(-1.0) };
 		REQUIRE(c == -1);
+		const value_t d{ float(-0.5) };
+		REQUIRE(d == -0.5);
 	};
 
 	SECTION("Construction from Int") {
@@ -117,5 +130,7 @@ TEST_CASE("Fixed-point numbers with s2.2 format are constructed", "[fixedpoint]"
 		REQUIRE(a == 3.5);
 		const value_t b = value_t::IntDiv(1, 2);
 		REQUIRE(b == 0.5);
+		const value_t c = value_t::IntDiv(-3, 6);
+		REQUIRE(c == -0.5);
 	};
 };
