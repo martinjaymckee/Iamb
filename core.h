@@ -156,6 +156,25 @@ struct MaskStorage<Storage, ValueMask, true>
   static constexpr Storage exec(const Storage& _val) { return ValueMask & _val; }
 };
 
+template<class Storage, size_t TotalBits, bool doFill>
+struct FillNegative
+{
+  static constexpr Storage exec(const Storage& _val) { return _val; }
+};
+
+template<class Storage, size_t TotalBits>
+struct FillNegative<Storage, TotalBits, true>
+{
+  static constexpr size_t storage_bits{8*sizeof(Storage)};
+  static constexpr size_t upper_bits{storage_bits - TotalBits};
+  static constexpr Storage negativeBit{1<<(TotalBits-1)};
+  static constexpr Storage negativeMask{((1<<upper_bits)-1)<<TotalBits};
+
+  static constexpr Storage exec(const Storage& _val) {
+    return _val | (((_val & negativeBit) != 0) ? negativeMask : 0);
+  }
+};
+
 } /*namespace internal*/
 
 // TODO: WHEN ERROR HANDLING IS ADDED TO THIS CLASS, THE ACTUAL ERROR HANDLING SHOULD BE CONTROLLED BY A TEMPLATE PARAMETER.
@@ -306,7 +325,8 @@ class FixedPoint
         template<typename V1 = double, typename V2 = V1,
                  typename = std::enable_if_t<!std::is_integral<V2>::value, V1>>
         constexpr operator V1 () const {
-            return static_cast<V1>(storage_) / meta::raise_to_nth<fractionalBits, V1>(2);
+            const storage_t value = internal::FillNegative<storage_t, totalBits, (storageBits>totalBits)>::exec(storage_);
+            return static_cast<V1>(value) / meta::raise_to_nth<fractionalBits, V1>(2);
         }
 
         //
@@ -323,11 +343,16 @@ class FixedPoint
             } else {
                 constexpr storage_t neg_one(-1);
                 const bool invert = ( _other.storage_ < 0 );
-                storage_t value = invert?(neg_one*static_cast<storage_t>(_other.storage_)):static_cast<storage_t>(_other.storage_);
-
+                storage_t value = invert ? (neg_one*static_cast<storage_t>(_other.storage_)) : static_cast<storage_t>(_other.storage_);
                 value = internal::shift<(static_cast<int16_t>(F) - static_cast<int16_t>(fractionalBits))>(value);
 
-                storage_ = invert ? (neg_one*value) : value;
+                storage_ = internal::MaskStorage<
+                  storage_t,
+                  valueMask,
+                  (storageBits>totalBits)
+                >::exec(
+                  invert ? (neg_one*value) : value
+                );
             }
             return *this;
         }
@@ -341,27 +366,66 @@ class FixedPoint
         //	Direct access to storage value
         constexpr storage_t storage() const { return storage_; }
 
+        //  Negation
+        ref_t operator - () {
+			constexpr storage_t neg_one(-1);
+            storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              neg_one * storage_
+            );
+            return *this;
+        }
+
         //	Addition-Assignment
-        constexpr ref_t& operator += (const ref_t& _other) {
-            storage_ += _other.storage_;
+        constexpr ref_t& operator += (ref_t _other) {
+            storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              storage_ + _other.storage_
+            );
             return *this;
         }
 
         //	Subtraction-Assignment
-        constexpr ref_t& operator -= (const ref_t& _other) {
-            storage_ -= _other.storage_;
+        constexpr ref_t& operator -= (ref_t _other) {
+            storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              storage_ - _other.storage_
+            );
             return *this;
         }
 
         //	Multiply-Assignment
-        constexpr ref_t& operator *= (const ref_t& _other) {
-            storage_ = static_cast<storage_t>( ( (static_cast<calc_t>(storage_) * _other.storage_) / (1<<fractionalBits) ) );
+        constexpr ref_t& operator *= (ref_t _other) {
+            storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              static_cast<storage_t>( ( (static_cast<calc_t>(storage_) * _other.storage_) / (1<<fractionalBits) ) )
+            );
+
             return *this;
         }
 
         //	Division-Assignment
-        constexpr ref_t& operator /= (const ref_t& _other) {
-            storage_ = static_cast<storage_t>( (static_cast<calc_t>(storage_) * (1<<fractionalBits) ) / _other.storage_ );
+        constexpr ref_t& operator /= (ref_t _other) {
+            storage_ = internal::MaskStorage<
+              storage_t,
+              valueMask,
+              (storageBits>totalBits)
+            >::exec(
+              static_cast<storage_t>( (static_cast<calc_t>(storage_) * (1<<fractionalBits) ) / _other.storage_ )
+            );
+
             return *this;
         }
 

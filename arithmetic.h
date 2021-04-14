@@ -41,37 +41,44 @@ namespace iamb
 // Basic Arithmetic Operations
 //
 //  Negation
-template<typename S, size_t F, typename C>
-constexpr FixedPoint<S, F, C> operator - (const FixedPoint<S, F, C>& _a) {
-    constexpr FixedPoint<S, F, C> neg_one(-1);
-    return neg_one * _a;
+template<typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O>
+constexpr FixedPoint<S, F, T, C, O> operator - (FixedPoint<S, F, T, C, O> _a) {
+    -_a;
+    return _a;
 }
 
 //  Addition
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
-constexpr FixedPoint<S1, F1, C1> operator + (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b)
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
+constexpr FixedPoint<S1, F1, T1, C1, O1> operator + (
+        FixedPoint<S1, F1, T1, C1, O1> _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b)
 {
-    FixedPoint<S1, F1, C1> temp(_a);
-    temp += _b;
-    return temp;
+    _a += _b;
+    return _a;
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator + (const FixedPoint<S, F, C>& _a, const V& _b) {
-    const FixedPoint<S, F, C> b(_b);
-    FixedPoint<S> temp(_a);
-    temp += b;
-    return temp;
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator + (FixedPoint<S, F, T, C, O> _a, const V& _b) {
+    const FixedPoint<S, F, T, C, O> b(_b);
+    _a += b;
+    return _a;
 }
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator + (const V& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<S, F, C> temp(_a);
+template<
+  typename V,
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator + (const V& _a, const FixedPoint<S, F, T, C, O>& _b) {
+    FixedPoint<S, F, T, C, O> temp(_a);
     temp += _b;
     return temp;
 }
@@ -79,87 +86,110 @@ constexpr FixedPoint<S, F, C> operator + (const V& _a, const FixedPoint<S, F, C>
 
 //  Subtraction
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
-constexpr FixedPoint<S1, F1, C1> operator - (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b)
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
+constexpr FixedPoint<S1, F1, T1, C1, O1> operator - (
+        FixedPoint<S1, F1, T1, C1, O1> _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b)
 {
-    FixedPoint<S1, F1, C1> temp(_a);
-    temp -= _b;
-    return temp;
+    _a -= _b;
+    return _a;
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator - (const FixedPoint<S, F, C>& _a, const V& _b) {
-    const FixedPoint<S, F, C> b(_b);
-    FixedPoint<S> temp(_a);
-    temp -= b;
-    return temp;
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator - (FixedPoint<S, F, T, C, O> _a, const V& _b) {
+    const FixedPoint<S, F, T, C, O> b(_b);
+    _a -= b;
+    return _a;
 }
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator - (const V& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<S, F, C> temp(_a);
+template<
+  typename V,
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator - (const V& _a, const FixedPoint<S, F, T, C, O>& _b) {
+    FixedPoint<S, F, T, C, O> temp(_a);
     temp -= _b;
     return temp;
 }
 
 //  Multiplication
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
-constexpr FixedPoint<S1, F1, C1> operator * (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b)
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
+constexpr FixedPoint<S1, F1, T1, C1, O1> operator * (
+        FixedPoint<S1, F1, T1, C1, O1> _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b)
 {
-    FixedPoint<S1, F1, C1> temp(_a);
+    _a *= _b;
+    return _a;
+}
+
+//      --> With Conversion
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator * (FixedPoint<S, F, T, C, O> _a, const V& _b) {
+    const FixedPoint<S, F, T, C, O> b(_b);
+    _a *= b;
+    return _a;
+}
+
+template<
+  typename V,
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator * (const V& _a, const FixedPoint<S, F, T, C, O>& _b) {
+    FixedPoint<S, F, T, C, O> temp(_a);
     temp *= _b;
     return temp;
 }
 
-//      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator * (const FixedPoint<S, F, C>& _a, const V& _b) {
-    const FixedPoint<S, F, C> b(_b);
-    FixedPoint<S> temp(_a);
-    temp *= b;
-    return temp;
-}
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator * (const V& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<S, F, C> temp(_a);
-    temp *= _b;
-    return temp;
-}
 
 //  Division
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
-constexpr FixedPoint<S1, F1, C1> operator / (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b)
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
+constexpr FixedPoint<S1, F1, T1, C1, O1> operator / (
+        FixedPoint<S1, F1, T1, C1, O1> _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b)
 {
-    FixedPoint<S1, F1, C1> temp(_a);
-    temp /= _b;
-    return temp;
+    _a /= _b;
+    return _a;
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator / (const FixedPoint<S, F, C>& _a, const V& _b) {
-    const FixedPoint<S, F, C> b(_b);
-    FixedPoint<S> temp(_a);
-    temp /= b;
-    return temp;
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator / (FixedPoint<S, F, T, C, O> _a, const V& _b) {
+    const FixedPoint<S, F, T, C, O> b(_b);
+    _a /= b;
+    return _a;
 }
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
-constexpr FixedPoint<S, F, C> operator / (const V& _a, const FixedPoint<S, F, C>& _b) {
-    FixedPoint<S, F, C> temp(_a);
+template<
+  typename V,
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
+constexpr FixedPoint<S, F, T, C, O> operator / (const V& _a, const FixedPoint<S, F, T, C, O>& _b) {
+    FixedPoint<S, F, T, C, O> temp(_a);
     temp /= _b;
     return temp;
 }
@@ -168,22 +198,23 @@ constexpr FixedPoint<S, F, C> operator / (const V& _a, const FixedPoint<S, F, C>
 // Stream Output
 //  -- Note: At the moment this is just formatting through the built-in double type
 //
-template<typename Stream, typename S, size_t F, typename C>
-constexpr Stream& operator << (Stream& _stream, const iamb::FixedPoint<S, F, C>& _v) {
+template<typename Stream, typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O>
+constexpr Stream& operator << (Stream& _stream, const iamb::FixedPoint<S, F, T, C, O>& _v) {
     _stream << static_cast<double>(_v);
     return _stream;
 
 }
 
+/*
 //
 // Safe Value Comparisons
 //
 template<size_t N> // TODO: FIGURE OUT WHAT THE HECK THIS IS DOING!
 struct Compare
 {
-    template<typename S, size_t F, typename C>
-    static bool equalTo(const FixedPoint<S, F, C>& _a, const FixedPoint<S, F, C>& _b) {
-        using value_t = FixedPoint<S, F, C>;
+    template<typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O>
+    static bool equalTo(const FixedPoint<S, F, T, C, O>& _a, const FixedPoint<S, F, T, C, O>& _b) {
+        using value_t = FixedPoint<S, F, T, C, O>;
         using storage_t = typename value_t::storage_t;
         using calc_t = typename value_t::calc_t;
 
@@ -191,11 +222,12 @@ struct Compare
         return (_a.storage() & mask) == (_b.storage() & mask);
     }
 };
+*/
 
 //  Reciprocal
-template<typename S, size_t F, typename C>
-constexpr FixedPoint<S, F, C> reciprocal(const FixedPoint<S, F, C>& _a) {
-    constexpr FixedPoint<S, F, C> one(1);
+template<typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O>
+constexpr FixedPoint<S, F, T, C, O> reciprocal(const FixedPoint<S, F, T, C, O>& _a) {
+    static constexpr FixedPoint<S, F, T, C, O> one(1);
     return one/_a;
 }
 } /*namespace iamb*/
