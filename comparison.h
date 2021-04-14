@@ -42,179 +42,220 @@ namespace iamb
 //
 //  Equality
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
 constexpr bool operator == (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b
+        const FixedPoint<S1, F1, T1, C1, O1>& _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b
 ) {
     return _a.storage() == _b.storage();
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator == (
-        const FixedPoint<S, F, C>& _a,
+        const FixedPoint<S, F, T, C, O>& _a,
         const V& _b
 ) {
-    return _a.storage() == FixedPoint<S, F, C>(_b).storage();
+    return _a.storage() == FixedPoint<S, F, T, C, O>(_b).storage();
 }
 
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename V, typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator == (
         const V& _a,
-        const FixedPoint<S, F, C>& _b
+        const FixedPoint<S, F, T, C, O>& _b
 ) {
-    return FixedPoint<S, F, C>(_a).storage() == _b.storage();
+    return FixedPoint<S, F, T, C, O>(_a).storage() == _b.storage();
 }
 
 //  Inequality
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
 constexpr bool operator != (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b
+        const FixedPoint<S1, F1, T1, C1, O1>& _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b
 ) {
     return _a.storage() != _b.storage();
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator != (
-        const FixedPoint<S, F, C>& _a,
+        const FixedPoint<S, F, T, C, O>& _a,
         const V& _b
 ) {
-    return _a.storage() != FixedPoint<S, F, C>(_b).storage();
+    return _a.storage() != FixedPoint<S, F, T, C, O>(_b).storage();
 }
 
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator != (
         const V& _a,
-        const FixedPoint<S, F, C>& _b
+        const FixedPoint<S, F, T, C, O>& _b
 ) {
-    return FixedPoint<S, F, C>(_a).storage() != _b.storage();
+    return FixedPoint<S, F, T, C, O>(_a).storage() != _b.storage();
 }
 
 //  Greater Than
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
 constexpr bool operator > (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b
+        const FixedPoint<S1, F1, T1, C1, O1>& _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b
 ) {
     return _a.storage() > _b.storage();
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator > (
-        const FixedPoint<S, F, C>& _a,
+        const FixedPoint<S, F, T, C, O>& _a,
         const V& _b
 ) {
-    return _a.storage() > FixedPoint<S, F, C>(_b).storage();
+    return _a.storage() > FixedPoint<S, F, T, C, O>(_b).storage();
 }
 
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator > (
         const V& _a,
-        const FixedPoint<S, F, C>& _b
+        const FixedPoint<S, F, T, C, O>& _b
 ) {
-    return FixedPoint<S, F, C>(_a).storage() > _b.storage();
+    return FixedPoint<S, F, T, C, O>(_a).storage() > _b.storage();
 }
 
 //  Greater Than or Equal
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
 constexpr bool operator >= (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b
+        const FixedPoint<S1, F1, T1, C1, O1>& _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b
 ) {
     return _a.storage() >= _b.storage();
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator >= (
-        const FixedPoint<S, F, C>& _a,
+        const FixedPoint<S, F, T, C, O>& _a,
         const V& _b
 ) {
-    return _a.storage() >= FixedPoint<S, F, C>(_b).storage();
+    return _a.storage() >= FixedPoint<S, F, T, C, O>(_b).storage();
 }
 
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator >= (
         const V& _a,
-        const FixedPoint<S, F, C>& _b
+        const FixedPoint<S, F, T, C, O>& _b
 ) {
-    return FixedPoint<S, F, C>(_a).storage() >= _b.storage();
+    return FixedPoint<S, F, T, C, O>(_a).storage() >= _b.storage();
 }
 
 //  Less Than
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
 constexpr bool operator < (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b
+        const FixedPoint<S1, F1, T1, C1, O1>& _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b
 ) {
     return _a.storage() < _b.storage();
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator < (
-        const FixedPoint<S, F, C>& _a,
+        const FixedPoint<S, F, T, C, O>& _a,
         const V& _b
 ) {
-    return _a.storage() < FixedPoint<S, F, C>(_b).storage();
+    return _a.storage() < FixedPoint<S, F, T, C, O>(_b).storage();
 }
 
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator < (
         const V& _a,
-        const FixedPoint<S, F, C>& _b
+        const FixedPoint<S, F, T, C, O>& _b
 ) {
-    return FixedPoint<S, F, C>(_a).storage() < _b.storage();
+    return FixedPoint<S, F, T, C, O>(_a).storage() < _b.storage();
 }
 
 //  Less Than or Equal
 //      --> Symmetric
-template<typename S1, size_t F1, typename C1, typename S2, size_t F2, typename C2>
+template<
+  typename S1, size_t F1, size_t T1, typename C1, OverflowHandling::overflow_t O1,
+  typename S2, size_t F2, size_t T2, typename C2, OverflowHandling::overflow_t O2
+>
 constexpr bool operator <= (
-        const FixedPoint<S1, F1, C1>& _a,
-        const FixedPoint<S2, F2, C2>& _b
+        const FixedPoint<S1, F1, T1, C1, O1>& _a,
+        const FixedPoint<S2, F2, T2, C2, O2>& _b
 ) {
     return _a.storage() <= _b.storage();
 }
 
 //      --> With Conversion
-template<typename S, size_t F, typename C, typename V,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator <= (
-        const FixedPoint<S, F, C>& _a,
+        const FixedPoint<S, F, T, C, O>& _a,
         const V& _b
 ) {
-    return _a.storage() <= FixedPoint<S, F, C>(_b).storage();
+    return _a.storage() <= FixedPoint<S, F, T, C, O>(_b).storage();
 }
 
-template<typename V, typename S, size_t F, typename C,
-         typename = decltype(static_cast<C>(std::declval<V>()))>
+template<
+  typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O,
+  typename V, typename = decltype(static_cast<C>(std::declval<V>()))
+>
 constexpr bool operator <= (
         const V& _a,
-        const FixedPoint<S, F, C>& _b
+        const FixedPoint<S, F, T, C, O>& _b
 ) {
-    return FixedPoint<S, F, C>(_a).storage() <= _b.storage();
+    return FixedPoint<S, F, T, C, O>(_a).storage() <= _b.storage();
 }
 
 } /*namespace iamb*/
 
 #endif /*IAMB_COMPARISON_H*/
-

@@ -141,22 +141,38 @@ struct FixedPointReturn
     FixedPointErrors err;
 };
 
+namespace internal
+{
+
+} /*namespace internal*/
+
 // TODO: WHEN ERROR HANDLING IS ADDED TO THIS CLASS, THE ACTUAL ERROR HANDLING SHOULD BE CONTROLLED BY A TEMPLATE PARAMETER.
-template<typename Store = int32_t, size_t Fractional = 16, typename Calc = int64_t>
+template<
+  class Store = int32_t,
+  size_t Fractional = 16,
+  size_t Total = 8*sizeof(Store),
+  typename Calc = int64_t,
+  OverflowHandling::overflow_t OverflowHandlingFlag = OverflowHandling::Wrapping
+>
 class FixedPoint
 {
     public: // TODO: MAKE THE EXTERNAL FUNCTIONS FRIEND FUNCTIONS! THIS SHOULD REALLY BE PROTECTED....
         using storage_t = Store;
         using calc_t = Calc;
-        using ref_t =  FixedPoint<Store, Fractional, Calc>;
+        using ref_t =  FixedPoint<Store, Fractional, Total, Calc, OverflowHandlingFlag>;
 
-        static constexpr size_t totalBits = 8*sizeof(storage_t);
+        static constexpr size_t storageBits = 8*sizeof(Store);
+        static constexpr size_t totalBits = Total;
         static constexpr size_t fractionalBits = Fractional;
         static constexpr size_t wholeBits = totalBits-fractionalBits;
         static constexpr storage_t integerMask = ((1<<wholeBits) - 1) << fractionalBits;
         static constexpr storage_t fractionalMask = (1<<fractionalBits) - 1;
+        static constexpr calc_t valueMask = static_cast<calc_t>((calc_t(1)<<totalBits) - 1);
 
-        template<class S, size_t F, class C>
+        //
+        // Allow internal access to other overloads of the fixed-point class
+        //
+        template<class S, size_t F, size_t T, class C, OverflowHandling::overflow_t O>
         friend class FixedPoint;
 
         //
@@ -171,31 +187,29 @@ class FixedPoint
         constexpr FixedPoint( const Value& _value, const Flags::flags_t& _flags = Flags::None)
             : storage_(
                   processFlags(
-                      static_cast<storage_t>(_value*meta::raise_to_nth<fractionalBits, calc_t>(2)),
+                      valueMask & static_cast<storage_t>(_value*meta::raise_to_nth<fractionalBits, calc_t>(2)),
                       _value < 0,
                       _flags
                   )
              ) {}
 
         //	Conversion Constructor
-        template<typename S, size_t F, typename C>
-        constexpr FixedPoint( const FixedPoint<S, F, C>& _other ) {
-
-            if(F == fractionalBits) {
+        template<typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O>
+        constexpr FixedPoint( const FixedPoint<S, F, T, C, O>& _other ) {
+          if(F == fractionalBits) {
         		storage_ = _other.storage_;
         	} else {
-                constexpr storage_t neg_one(-1);
-                const bool invert = ( _other.storage_ < 0 );
-        		storage_t value = invert?(neg_one*static_cast<storage_t>(_other.storage_)):static_cast<storage_t>(_other.storage_);
-
-                value = internal::shift<(static_cast<int16_t>(F) - static_cast<int16_t>(fractionalBits))>(value);
-
+            constexpr storage_t neg_one(-1);
+            const bool invert = ( _other.storage_ < 0 );
+    		    storage_t value = invert?(neg_one*static_cast<storage_t>(_other.storage_)):static_cast<storage_t>(_other.storage_);
+            value = internal::shift<(static_cast<int16_t>(F) - static_cast<int16_t>(fractionalBits))>(value);
         		storage_ = invert ? (neg_one*value) : value;
         	}
         }
 
-        template<typename S, size_t F, typename C>
-        constexpr FixedPoint(const FixedPointReturn<FixedPoint<S, F, C>>& _ret) : FixedPoint(_ret.val) {}
+        //  Conversion Constructor
+        template<typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O>
+        constexpr FixedPoint(const FixedPointReturn<FixedPoint<S, F, T, C, O>>& _ret) : FixedPoint(_ret.val) {}
 
         //	Integer Scaled Static Factory
         static constexpr ref_t IntDiv(const storage_t& _value, const storage_t& _div, const Flags::flags_t& _flags = Flags::None) {
@@ -260,8 +274,8 @@ class FixedPoint
         //
 
         //	Assignment
-        template<typename S, size_t F, typename C>
-        ref_t& operator = ( const FixedPoint<S, F, C>& _other ) {
+        template<typename S, size_t F, size_t T, typename C, OverflowHandling::overflow_t O>
+        ref_t& operator = ( const FixedPoint<S, F, T, C, O>& _other ) {
             if(F == fractionalBits) { // TODO: ASSUMES THAT THE REMAINDER WILL BE ELIDED... CHECK THIS FOR OPTIMIZATION
                 storage_ = _other.storage_;
             } else {
@@ -284,11 +298,6 @@ class FixedPoint
 
         //	Direct access to storage value
         constexpr storage_t storage() const { return storage_; }
-
-        //	Conversion to Floating Point
-//        constexpr operator float() const { return static_cast<double>(storage_) / pow(2.0,fractionalBits); }
-//        constexpr operator double() const { return static_cast<double>(storage_) / pow(2.0,fractionalBits); }
-
 
         //	Addition-Assignment
         constexpr ref_t& operator += (const ref_t& _other) {
@@ -321,7 +330,7 @@ class FixedPoint
                 const bool& _is_negative,
                 const Flags::flags_t& _flags )
         {
-        	if( _flags == Flags::NO_UNDERFLOW) return (_storage != 0) ? _storage : (_is_negative ? 0xFFFFFFFF : 0x00000001);
+        	if( _flags == Flags::NoUnderflow) return (_storage != 0) ? _storage : (_is_negative ? 0xFFFFFFFF : 0x00000001);
         	return _storage;
         }
 
