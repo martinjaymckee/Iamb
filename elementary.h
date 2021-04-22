@@ -42,7 +42,6 @@
 //
 namespace iamb
 {
-
 //
 // Elementary Functions
 //

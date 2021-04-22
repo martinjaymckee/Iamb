@@ -20,7 +20,7 @@
 // Fixed-Point Comparisons
 //
 TEST_CASE("Fixed-point numbers with s5.11 format are constructed", "[fixedpoint]") {
-	using value_t = iamb::FixedPoint<int16_t, 11>; // This is an s5.11 fixed-point type
+	using value_t = iamb::SignedFixedPoint<5, 11>; // This is an s5.11 fixed-point type
 	const value_t one{1};
 	const value_t half{0.5};
 	const value_t seven{7};

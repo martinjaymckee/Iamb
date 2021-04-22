@@ -7,7 +7,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2017 Martin Jay McKee
+// Copyright (c) 2017-2021 Martin Jay McKee
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,8 @@
 #include <utility>
 
 #include <stdint.h>
+
+#include "meta.h"
 
 namespace iamb
 {
@@ -74,6 +76,12 @@ constexpr Value raise_to_nth(const Value& v) {
     for(size_t i=0; i<Power-1; ++i) prod *= v;
     return prod;
 }
+
+template<class Storage>
+struct StorageSize
+{
+  static constexpr size_t bits = 8 * sizeof(Storage);
+};
 } /*namespace meta*/
 
 struct NumCode {
@@ -98,7 +106,8 @@ struct OverflowHandling
 {
   enum overflow_t {
     Wrapping,
-    Saturating
+    Saturating,
+    Invalid
   };
 };
 
@@ -168,38 +177,158 @@ struct FillNegative<Storage, TotalBits, true>
   static constexpr size_t storage_bits{8*sizeof(Storage)};
   static constexpr size_t upper_bits{storage_bits - TotalBits};
   static constexpr Storage negativeBit{1<<(TotalBits-1)};
-  static constexpr Storage negativeMask{((1<<upper_bits)-1)<<TotalBits};
+  static constexpr Storage negativeMask{static_cast<Storage>(((1<<upper_bits)-1)<<TotalBits)};
 
   static constexpr Storage exec(const Storage& _val) {
     return _val | (((_val & negativeBit) != 0) ? negativeMask : 0);
   }
 };
 
+//
+// Sign Check Implementations
+//
+template<class Value, size_t Whole, size_t Fractional, size_t Offset = 0>
+struct SignImpl
+{
+  using value_t = Value;
+  static constexpr bool is_signed{std::is_signed<value_t>::value};
+  static constexpr value_t value_mask{static_cast<value_t>(((1<<(Whole+Fractional))-1)<<Offset)};
+  static constexpr value_t sign_bit{static_cast<value_t>(1<<(Whole+Fractional+Offset-1))};
+
+  static constexpr bool negative(const value_t& _val) {
+    return is_signed && ((_val&sign_bit) != 0);
+  }
+
+  static constexpr bool nonnegative(const value_t& _val) {
+    return (is_signed ? ((_val&sign_bit) == 0) : true );
+  }
+
+  static constexpr bool positive(const value_t& _val) {
+    const value_t val{static_cast<value_t>(value_mask & _val)};
+    return (is_signed ? ((val&sign_bit) == 0) : true ) && (val != 0);
+  }
+
+  static constexpr bool zero(const value_t& _val) {
+    return (_val&value_mask) == 0;
+  }
+};
+
+
+//
+// Addition Implementations with overflow handling
+//
+//  Default Addition Implementation
+template<bool Signed, OverflowHandling::overflow_t OverflowHandlingFlag>
+struct AdditionImpl
+{
+  template<class Value, size_t Whole, size_t Fractional>
+  static constexpr Value exec(const Value& _a, const Value& _b) {
+    return _a + _b;
+  }
+};
+
+//  Signed Saturating Addition Implementation
+template<>
+struct AdditionImpl<true, OverflowHandling::Saturating>
+{
+  template<class Value, size_t Whole, size_t Fractional>
+  static constexpr Value exec(const Value& _a, const Value& _b) {
+    using sign_t = SignImpl<Value, Whole, Fractional>;
+    static constexpr Value minimum{static_cast<Value>(1<<(Whole+Fractional-1))};
+    static constexpr Value maximum{static_cast<Value>(minimum-1)};
+
+    if(sign_t::nonnegative(_a)) {
+      if(sign_t::nonnegative(_b)) {
+        if((maximum - _a) < _b) return maximum;
+      }
+    } else {
+      if(sign_t::negative(_b)) {
+        //if((minimum - _a) < _b) return minimum;
+        // HANDLE BOTH NEGATIVE
+        return 0;
+      }
+    }
+
+    return _a + _b;
+  }
+};
+
+//  Unsigned Saturating Addition Implementation
+template<>
+struct AdditionImpl<false, OverflowHandling::Saturating>
+{
+  template<class Value, size_t Whole, size_t Fractional>
+  static constexpr Value exec(const Value& _a, const Value& _b) {
+    static constexpr Value maximum{static_cast<Value>((1<<(Whole+Fractional))-1)};
+    if((maximum - _a) > _b) return maximum;
+    return _a + _b;
+  }
+};
+
+//
+// Subtraction Implementations with overflow handling
+//
+//  Default Subtraction Implementation
+template<bool Signed, OverflowHandling::overflow_t OverflowHandlingFlag>
+struct SubtractionImpl
+{
+  template<class Value, size_t Whole, size_t Fractional>
+  static constexpr Value exec(const Value& _a, const Value& _b) {
+    return _a - _b;
+  }
+};
+
+//  Signed Saturating Subtraction Implementation
+template<>
+struct SubtractionImpl<true, OverflowHandling::Saturating>
+{
+  template<class Value, size_t Whole, size_t Fractional>
+  static constexpr Value exec(const Value& _a, const Value& _b) {
+    return _a - _b;
+  }
+};
+
+//  Unsigned Saturating Subtraction Implementation
+template<>
+struct SubtractionImpl<false, OverflowHandling::Saturating>
+{
+  template<class Value, size_t Whole, size_t Fractional>
+  static constexpr Value exec(const Value& _a, const Value& _b) {
+    return _a - _b;
+  }
+};
 } /*namespace internal*/
 
-// TODO: WHEN ERROR HANDLING IS ADDED TO THIS CLASS, THE ACTUAL ERROR HANDLING SHOULD BE CONTROLLED BY A TEMPLATE PARAMETER.
 template<
   class Store = int32_t,
   size_t Fractional = 16,
-  size_t Total = 8*sizeof(Store),
+  size_t Total = meta::StorageSize<Store>::bits,
   typename Calc = int64_t,
   OverflowHandling::overflow_t OverflowHandlingFlag = OverflowHandling::Wrapping
 >
 class FixedPoint
 {
-    public: // TODO: MAKE THE EXTERNAL FUNCTIONS FRIEND FUNCTIONS! THIS SHOULD REALLY BE PROTECTED....
+    public:
         using storage_t = Store;
         using calc_t = Calc;
         using ref_t =  FixedPoint<Store, Fractional, Total, Calc, OverflowHandlingFlag>;
 
-        static constexpr size_t storageBits = 8*sizeof(Store);
+        static constexpr bool isSigned = std::is_signed<Store>::value;
+        static constexpr size_t storageBits = meta::StorageSize<Store>::bits;
         static constexpr size_t totalBits = Total;
+        static constexpr size_t unusedBits = storageBits - totalBits;
         static constexpr size_t fractionalBits = Fractional;
         static constexpr size_t wholeBits = totalBits-fractionalBits;
+
+      protected:
         static constexpr storage_t integerMask = ((1<<wholeBits) - 1) << fractionalBits;
         static constexpr storage_t fractionalMask = (1<<fractionalBits) - 1;
-        static constexpr calc_t valueMask = static_cast<calc_t>((calc_t(1)<<totalBits) - 1);
+        static constexpr storage_t valueMask = static_cast<storage_t>((1ull<<totalBits) - 1);
+        using storage_sign_impl_t = internal::SignImpl<storage_t, wholeBits, fractionalBits>;
+        using add_impl_t = internal::AdditionImpl<isSigned, OverflowHandlingFlag>;
+        using sub_impl_t = internal::SubtractionImpl<isSigned, OverflowHandlingFlag>;
 
+      public:
         //
         // Allow internal access to other overloads of the fixed-point class
         //
@@ -307,9 +436,10 @@ class FixedPoint
         //
         constexpr ref_t integer() const { return Storage(storage_&integerMask); }
         constexpr ref_t fractional() const { return Storage(storage_&fractionalMask); }
-        constexpr bool isPositive() const { return storage_ > 0; }
-        constexpr bool isNegative() const { return storage_ < 0; }
-        constexpr bool isZero() const { return storage_ == 0; }
+        constexpr bool isPositive() const { return storage_sign_impl_t::positive(storage_); }
+        constexpr bool isNegative() const { return storage_sign_impl_t::negative(storage_); }
+        constexpr bool isNonnegative() const { return storage_sign_impl_t::nonnegative(storage_); }
+        constexpr bool isZero() const { return storage_sign_impl_t::zero(storage_); }
 
         //
         // Conversion Operators
@@ -331,8 +461,6 @@ class FixedPoint
 
         //
         // Operators
-        //
-        //		TODO: These should be modified so that they can be used on different FixedPoint classes....
         //
 
         //	Assignment
@@ -386,7 +514,11 @@ class FixedPoint
               valueMask,
               (storageBits>totalBits)
             >::exec(
-              storage_ + _other.storage_
+              add_impl_t::exec<
+                storage_t,
+                wholeBits,
+                fractionalBits
+              >(storage_, _other.storage_)
             );
             return *this;
         }
@@ -398,7 +530,11 @@ class FixedPoint
               valueMask,
               (storageBits>totalBits)
             >::exec(
-              storage_ - _other.storage_
+              sub_impl_t::exec<
+                storage_t,
+                wholeBits,
+                fractionalBits
+              >(storage_, _other.storage_)
             );
             return *this;
         }
@@ -443,6 +579,59 @@ class FixedPoint
     private:
         storage_t storage_;
 };
+
+//
+// "Easy" construction aliases
+//
+template<
+  size_t Whole = 16,
+  size_t Fractional = 16,
+  OverflowHandling::overflow_t OverflowHandlingFlag = OverflowHandling::Wrapping,
+  size_t Total = Whole + Fractional
+>
+using SignedFixedPoint = FixedPoint<
+    typename iamb::meta::IambTypes<true, Total>::type,
+    Fractional,
+    Total,
+    typename iamb::meta::IambTypes<true, 2 * Total>::type,
+    OverflowHandlingFlag
+  >;
+
+template<
+  size_t Whole = 16,
+  size_t Fractional = 16
+>
+using SignedSaturatingFixedPoint = SignedFixedPoint<
+    Whole,
+    Fractional,
+    OverflowHandling::Saturating,
+	Whole + Fractional
+  >;
+
+template<
+  size_t Whole = 16,
+  size_t Fractional = 16,
+  OverflowHandling::overflow_t OverflowHandlingFlag = OverflowHandling::Wrapping,
+  size_t Total = Whole + Fractional
+>
+using UnsignedFixedPoint = FixedPoint<
+    typename iamb::meta::IambTypes<false, Total>::type,
+    Fractional,
+    Total,
+    typename iamb::meta::IambTypes<false, 2 *Total>::type,
+    OverflowHandlingFlag
+  >;
+
+  template<
+    size_t Whole = 16,
+    size_t Fractional = 16
+  >
+  using UnsignedSaturatingFixedPoint = SignedFixedPoint<
+      Whole,
+      Fractional,
+      OverflowHandling::Saturating,
+	  Whole + Fractional
+    >;
 } /*namespace iamb*/
 
 #endif /* IAMB_CORE_H */

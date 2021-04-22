@@ -7,7 +7,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2017 Martin Jay McKee
+// Copyright (c) 2017-2021 Martin Jay McKee
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

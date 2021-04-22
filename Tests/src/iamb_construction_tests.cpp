@@ -16,11 +16,42 @@
 #include <core.h>
 #include <comparison.h>
 
+
+//
+// Type Construction
+//
+TEST_CASE("Construction of correctly sized fixed-point numbers", "[fixedpoint]") {
+	SECTION("Default Signed Fixed-Point") {
+		using fp_t = iamb::SignedFixedPoint<>;
+		REQUIRE(fp_t::wholeBits == 16);
+		REQUIRE(fp_t::fractionalBits == 16);
+		REQUIRE(std::is_same<typename fp_t::storage_t, int32_t>::value);
+		REQUIRE(std::is_same<typename fp_t::calc_t, int64_t>::value);
+	};
+
+	SECTION("Arbitrary Signed Fixed-Point (s5.7)") {
+		using fp_t = iamb::SignedFixedPoint<5, 7>;
+		REQUIRE(fp_t::wholeBits == 5);
+		REQUIRE(fp_t::fractionalBits == 7);
+		REQUIRE(std::is_same<typename fp_t::storage_t, int16_t>::value);
+		REQUIRE(std::is_same<typename fp_t::calc_t, int32_t>::value);
+	};
+
+	SECTION("Arbitrary Unsigned Fixed-Point (u3.13)") {
+		using fp_t = iamb::UnsignedFixedPoint<3, 13>;
+		REQUIRE(fp_t::wholeBits == 3);
+		REQUIRE(fp_t::fractionalBits == 13);
+		REQUIRE(std::is_same<typename fp_t::storage_t, uint16_t>::value);
+		REQUIRE(std::is_same<typename fp_t::calc_t, uint32_t>::value);
+	};
+
+};
+
 //
 // Fixed-Point Construction
 //
 TEST_CASE( "Fixed-point numbers of default type are constructed", "[fixedpoint]" ) {
-	using value_t = iamb::FixedPoint<>; // This is a default s16.16 fixed-point type
+	using value_t = iamb::SignedFixedPoint<>; // This is a default s16.16 fixed-point type
 
 	SECTION("Direct Storage Construction") {
 		const value_t a = value_t::Storage(1<<16);
@@ -78,7 +109,7 @@ TEST_CASE( "Fixed-point numbers of default type are constructed", "[fixedpoint]"
 };
 
 TEST_CASE("Fixed-point numbers with s2.2 format are constructed", "[fixedpoint]") {
-	using value_t = iamb::FixedPoint<int8_t, 2, 4>; // This is an s2.2 fixed-point type
+	using value_t = iamb::SignedFixedPoint<2, 2>; // This is an s2.2 fixed-point type
 
 	SECTION("Direct Storage Construction") {
 		const value_t a = value_t::Storage(1 << 2);
