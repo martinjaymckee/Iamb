@@ -238,18 +238,18 @@ struct AdditionImpl<true, OverflowHandling::Saturating>
     static constexpr Value maximum{static_cast<Value>(minimum-1)};
 
     if(sign_t::nonnegative(_a)) {
-      if(sign_t::nonnegative(_b)) {
+      if(sign_t::nonnegative(_b)) { // Both Non-negative (positive overflow possible)
         if((maximum - _a) < _b) return maximum;
       }
     } else {
-      if(sign_t::negative(_b)) {
-        //if((minimum - _a) < _b) return minimum;
-        // HANDLE BOTH NEGATIVE
-        return 0;
+      if(sign_t::negative(_b)) { // Both Negative (negative overflow possible)
+        if( ((_a + _b) & sign_t::sign_bit) == 0) {
+          return minimum;
+        }
       }
     }
 
-    return _a + _b;
+    return _a + _b; // Alternate signs (overflow impossible)
   }
 };
 
@@ -260,7 +260,7 @@ struct AdditionImpl<false, OverflowHandling::Saturating>
   template<class Value, size_t Whole, size_t Fractional>
   static constexpr Value exec(const Value& _a, const Value& _b) {
     static constexpr Value maximum{static_cast<Value>((1<<(Whole+Fractional))-1)};
-    if((maximum - _a) > _b) return maximum;
+    if((maximum - _a) < _b) return maximum;
     return _a + _b;
   }
 };
@@ -618,7 +618,7 @@ using UnsignedFixedPoint = FixedPoint<
     typename iamb::meta::IambTypes<false, Total>::type,
     Fractional,
     Total,
-    typename iamb::meta::IambTypes<false, 2 *Total>::type,
+    typename iamb::meta::IambTypes<false, 2 * Total>::type,
     OverflowHandlingFlag
   >;
 
@@ -626,7 +626,7 @@ using UnsignedFixedPoint = FixedPoint<
     size_t Whole = 16,
     size_t Fractional = 16
   >
-  using UnsignedSaturatingFixedPoint = SignedFixedPoint<
+  using UnsignedSaturatingFixedPoint = UnsignedFixedPoint<
       Whole,
       Fractional,
       OverflowHandling::Saturating,

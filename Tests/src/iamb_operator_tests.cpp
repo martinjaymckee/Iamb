@@ -139,11 +139,16 @@ TEST_CASE( "Fixed-point assignment operators", "[fixedpoint]" ) {
 	};
 };
 
+template<class T>
+struct TD;
+
 TEST_CASE("Overflow Handling - Arbitrary Size", "[fixedpoint]") {
 	using s2_2_wrapping = iamb::SignedFixedPoint<2, 2>;					// Range [-2, 1.75]
 	using s2_2_saturating = iamb::SignedSaturatingFixedPoint<2, 2>;		// Range [-2, 1.75]
 	using u2_2_wrapping = iamb::UnsignedFixedPoint<2, 2>;				// Range [0, 3.75]
 	using u2_2_saturating = iamb::UnsignedSaturatingFixedPoint<2, 2>;	// Range [0, 3.75]
+
+	// TD<typename u2_2_saturating::storage_t> a;
 
 	// TODO: IMPLEMENT OVERFLOW HANDLING FOR NEGATION, MULTIPLICATION, AND DIVISION
 
@@ -176,7 +181,7 @@ TEST_CASE("Overflow Handling - Arbitrary Size", "[fixedpoint]") {
 		REQUIRE((a1 + b1) == u2_2_wrapping::Storage(0b0000));
 		const u2_2_saturating a2{ 3.75 };
 		const u2_2_saturating b2{ 0.25 };
-		REQUIRE((a2 + b2) == u2_2_saturating::Storage(0b1111));
+		REQUIRE( (a2+b2) == u2_2_saturating::Storage(0b1111));
 	};
 
 	SECTION("Signed Subtraction") {
